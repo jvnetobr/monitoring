@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 15s
+scrape_configs:
+  # Make Prometheus scrape itself for metrics.
+  - job_name: 'prometheus'
+    static_configs:
+    - targets: ['prometheus-hml:9090']
+  - job_name: 'docker-hml'
+    static_configs:
+    - targets: ["10.41.110.92:9323"]
+  - job_name: 'node'
+    static_configs:
+    - targets: ['10.41.110.92:9100']
+  #- job_name: 'dckr-swrm-hml'
+  - job_name: 'docker'
+    static_configs:
+    - targets: ["10.41.110.93:9323","10.41.110.94:9323","10.41.110.95:9323"]
