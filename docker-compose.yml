@@ -9,7 +9,8 @@ services:
     user: "1000:1000"
     restart: unless-stopped
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - /prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -27,7 +28,7 @@ services:
     image: prom/alertmanager
     container_name: alertmanager-hml
     volumes: 
-      - ./alertmanager:/etc/alertmanager/:ro
+      - /alertmanager:/etc/alertmanager/:ro
     ports: 
       - 9093:9093
     command: 
@@ -53,7 +54,7 @@ services:
     container_name: grafana-hml
     user: "1000:1000"
     volumes:
-      - ./grafana:/var/lib/grafana
+      - /grafana:/var/lib/grafana
     restart: unless-stopped
     ports:
       - 3000:3000
