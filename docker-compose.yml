@@ -2,6 +2,9 @@ networks:
   monit:
     external: true
 
+volumes:
+  prometheus:
+
 services:
   prometheus-hml:
     image: prom/prometheus:latest
@@ -9,7 +12,7 @@ services:
     user: "1000:1000"
     restart: unless-stopped
     volumes:
-      - /prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - /prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
