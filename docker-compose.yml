@@ -1,15 +1,16 @@
 networks:
-  monit:
+  monitoring:
     external: true
 
 volumes:
   prometheus:
 
 services:
-  prometheus-hml:
+  prometheus:
     image: prom/prometheus:latest
-    container_name: prometheus-hml
-    user: "1000:1000"
+    container_name: prometheus
+    user: "65534:65534"
+      #user: "1000:1000"
     restart: unless-stopped
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
@@ -24,13 +25,13 @@ services:
     ports:
       - 9090:9090
     networks:
-      - monit
+      - monitoring
     #depends_on:
-    #  - proxy-hml
+    #  - proxy
 
-  #alertmanager-hml: 
+  #alertmanager: 
     #image: prom/alertmanager
-    #container_name: alertmanager-hml
+    #container_name: alertmanager
     #volumes: 
     #  - ./alertmanager:/etc/alertmanager/:ro
     #ports: 
@@ -38,9 +39,9 @@ services:
     #command: 
     #  - --config.file=/etc/alertmanager/alertmanager.yml
     #networks:
-    #  - monit
+    #  - monitoring
     #depends_on:
-    #  - prometheus-hml
+    #  - prometheus
 
   node_exporter:
     image: quay.io/prometheus/node-exporter:latest
@@ -53,16 +54,18 @@ services:
     volumes:
       - '/:/host:ro,rslave'
 
-  grafana-hml:
+  grafana:
     image: grafana/grafana
-    container_name: grafana-hml
-    user: "1000:1000"
+    container_name: grafana
+    user: "472:0"
+      #user: "65534:65534"
     volumes:
       - ./grafana:/var/lib/grafana
+        #- ./grafana:/grafana/data/grafana.db
     restart: unless-stopped
     ports:
       - 3000:3000
     networks:
-      - monit
+      - monitoring
     depends_on:
-      - prometheus-hml
+      - prometheus
