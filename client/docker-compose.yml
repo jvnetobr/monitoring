@@ -9,6 +9,16 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
 
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter:v0.16.0
+    container_name: postgres_exporter
+    volumes:
+      - ./postgres_exporter.yml:/etc/postgres_exporter/postgres_exporter.yml
+    environment:
+      - CONFIG_PATH=/etc/postgres_exporter/postgres_exporter.yml
+    ports:
+      - "9187:9187"
+
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.2
     container_name: cadvisor

@@ -1,11 +1,121 @@
 groups:
-  - name: example
+  - name: 'Alertas Containers e Hosts'
     rules:
-      - alert: InstanceDown
-        expr: up == 0
+      - alert: HighCPUUsage
+        expr: (100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 90
         for: 5m
         labels:
           severity: critical
         annotations:
-          summary: "Instance {{ $labels.instance }} down"
-          description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes."
+          summary: "Uso de CPU alto em {{ $labels.instance }}"
+          description: "A CPU está acima de 90% por mais de 2 minutos."
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 < 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Baixa memória disponível em {{ $labels.instance }}"
+          description: "A memória disponível está abaixo de 10% por mais de 2 minutos."
+
+      - alert: DiskUsageCritical
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Espaço em disco crítico em {{ $labels.instance }}"
+          description: "O espaço em disco está abaixo de 10% na VM."
+
+      - alert: HighDiskUsage
+        expr: (node_filesystem_size_bytes{fstype!~"ext4|xfs"} - node_filesystem_avail_bytes{fstype!~"ext4|xfs"}) / node_filesystem_size_bytes{fstype!~"ext4|xfs"} * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Alto uso de disco em {{ $labels.instance }}"
+          description: "O uso de disco atingiu {{ $value }}% no filesystem {{ $labels.mountpoint }} do host {{ $labels.instance }}."
+
+      - alert: HighLoadAverage
+        expr: node_load1 > 2 * count(node_cpu_seconds_total{mode="idle"})
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Alto Load Average em {{ $labels.instance }}"
+          description: "O Load Average está alto comparado ao número de CPUs."
+
+      - alert: HostDown
+        expr: up == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Host {{ $labels.instance }} está offline"
+          description: "Prometheus não consegue alcançar a VM há mais de 3 minutos."
+
+      # - alert: HighContainerCPU
+      #   expr: rate(container_cpu_usage_seconds_total[5m]) > 0.9
+      #   for: 5m
+      #   labels:
+      #     severity: warning
+      #   annotations:
+      #     summary: "Alto uso de CPU no container {{ $labels.name }}"
+      #     description: "O container está consumindo mais de 90% da CPU disponível."
+
+      # - alert: HighContainerMemory
+      #   expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100 > 90 and container_spec_memory_limit_bytes > 0
+      #   for: 5m
+      #   labels:
+      #     severity: warning
+      #   annotations:
+      #     summary: "Alto uso de memória no container {{ $labels.name }}"
+      #     description: "O container está consumindo mais de 90% da memória alocada."
+
+      - alert: ContainerRestartingTooOften
+        expr: rate(container_restart_count[5m]) > 3
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} reiniciando com frequência"
+          description: "O container reiniciou mais de 3 vezes nos últimos 5 minutos."
+
+      - alert: InstanceDown
+        expr: up == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instância {{ $labels.instance }} down"
+          description: "{{ $labels.instance }} do job {{ $labels.job }} está down por mais de 3 minutos."
+
+      - alert: ContainerDown
+        expr: up{job="cadvisor"} == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container {{ $labels.container_label_com_docker_container_name }} down"
+          description: "{{ $labels.container_label_com_docker_container_name }} está down por mais de 3 minutos."
+
+  - name: "PostgreSQL"
+    rules:
+      - alert: SlowQueries
+        expr: pg_stat_activity_state_change_seconds > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Consulta lenta detectada em {{ $labels.instance }}"
+          description: "Consulta executando por mais de 10 segundos na instância {{ $labels.instance }}. Query: {{ $labels.query }}"
+
+      - alert: ManyConnections
+        expr: pg_stat_activity_count{state="active"} > 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Número alto de conexões ativas em {{ $labels.instance }}"
+          description: "Existem mais de 100 conexões ativas na instância {{ $labels.instance }}."

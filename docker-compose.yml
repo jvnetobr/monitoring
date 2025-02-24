@@ -1,6 +1,5 @@
 networks:
   monitoring:
-  # enable connection with Traefik
   traefik:
     external: true
 
@@ -59,37 +58,20 @@ services:
     networks:
       - monitoring
       - traefik
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik"
-      # Get the routes from http
-      - "traefik.http.routers.cadvisor.rule=Host(`${DOMAIN}`) && PathPrefix(`/cadvisor`)"
-      - "traefik.http.routers.cadvisor.entrypoints=web"
-      # Redirect these routes to https
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.routers.cadvisor.middlewares=redirect-to-https@docker"
-      # Get the routes from https
-      - "traefik.http.routers.cadvisor-secured.rule=Host(`${DOMAIN}`) && PathPrefix(`/cadvisor`)"
-      - "traefik.http.routers.cadvisor-secured.entrypoints=web-secure"
-      - "traefik.http.routers.cadvisor-secured.tls=true"
-      - "traefik.http.routers.cadvisor-secured.tls.certresolver=myhttpchallenge"
-      # Map service to 8080
-      - traefik.http.routers.cadvisor.service=cadvisor
-      - traefik.http.services.cadvisor.loadbalancer.server.port=8080
 
   alertmanager: 
     image: prom/alertmanager:v0.28.0
     container_name: alertmanager
     volumes: 
-     - ./alertmanager:/etc/alertmanager/:ro
-    ports: 
-     - 9093:9093
+      - ./alertmanager:/etc/alertmanager/:ro
+    #ports: 
+      #- 9093:9093
     command: 
-     - --config.file=/etc/alertmanager/alertmanager.yml
+      - --config.file=/etc/alertmanager/alertmanager.yml
     networks:
-     - monitoring
+      - monitoring
     depends_on:
-     - prometheus
+      - prometheus
 
   node_exporter:
     image: prom/node-exporter:v1.8.2
@@ -107,7 +89,7 @@ services:
     container_name: grafana
     user: "472:0"
     volumes:
-      - ./grafana:/var/lib/grafana
+      - ./grafana_data:/var/lib/grafana
         #- ./grafana:/grafana/data/grafana.db
     restart: unless-stopped
     networks:
@@ -133,3 +115,49 @@ services:
       # Get service on 3000 port
       - traefik.http.routers.grafana.service=grafana
       - traefik.http.services.grafana.loadbalancer.server.port=3000
+
+  loki:
+    image: grafana/loki
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./grafana/loki-config.yml:/etc/loki/loki-config.yml
+    networks:
+      - monitoring
+
+  promtail:
+    image: grafana/promtail
+    container_name: promtail
+    volumes:
+      - ./grafana/promtail-config.yml:/etc/promtail/promtail-config.yml
+      - /var/log:/var/log
+    networks:
+      - monitoring
+
+  tempo:
+    image: grafana/tempo:2.7.0
+    container_name: tempo
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      #- ./grafana/tempo-config.yml:/etc/tempo/tempo.yml
+      - ./grafana/tempo-config.yml:/etc/tempo/tempo-config.yml
+      - ./tempo_data:/var/tempo
+    command: ["-config.file=/etc/tempo/tempo-config.yml"]
+    networks:
+      - monitoring
+
+  otel-collector:
+    image: otel/opentelemetry-collector
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yml"]
+    volumes:
+      - ./otel/otel-collector-config.yml:/etc/otel-collector-config.yml
+    ports:
+      - "4319:4317"
+      - "4320:4318"
+    networks:
+      - monitoring

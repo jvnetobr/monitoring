@@ -2,25 +2,36 @@ global:
   resolve_timeout: 5m
 
 route:
-  receiver: 'slack-notifications'
-
-  # Configurações de agrupamento e repetição de alertas
+  receiver: 'default-receiver'
   group_by: ['alertname']
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 3h
 
+  routes:
+    - receiver: 'slack-notifications'
+    - receiver: 'discord-notifications'
+
 receivers:
+  - name: 'default-receiver'
+    webhook_configs:
+      - url: 'URL_DISCORD'
+
   - name: 'slack-notifications'
     slack_configs:
-      - api_url: '<YOUR_SLACK_WEBHOOK_URL>'
-        channel: '#your-channel'
+      - api_url: 'URL_SLACK'
+        channel: '#monitoramento-sistemas'
         send_resolved: true
-        text: '{{ range .Alerts }}{{ .Annotations.summary }}\n{{ .Annotations.description }}\n{{ end }}'
+        text: '{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}'
+
+  - name: 'discord-notifications'
+    webhook_configs:
+      - url: 'URL_DISCORD'
+        send_resolved: true
 
 inhibit_rules:
   - source_match:
       severity: 'critical'
     target_match:
       severity: 'warning'
-    equal: ['alertname', 'instance']
+    equal: ['alertname', 'dev', 'instance']
