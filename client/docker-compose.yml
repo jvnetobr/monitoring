@@ -2,6 +2,7 @@ services:
   node_exporter:
     image: prom/node-exporter:v1.8.2
     container_name: node_exporter
+    restart: always
     ports:
       - "9100:9100"
     volumes:
@@ -12,6 +13,7 @@ services:
   postgres_exporter:
     image: prometheuscommunity/postgres-exporter:v0.16.0
     container_name: postgres_exporter
+    restart: always
     volumes:
       - ./postgres_exporter.yml:/etc/postgres_exporter/postgres_exporter.yml
     environment:
@@ -22,6 +24,7 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.2
     container_name: cadvisor
+    restart: always
     ports:
       - "8080:8080"
     volumes:

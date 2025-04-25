@@ -16,3 +16,6 @@ receivers:
         send_resolved: true
         channel: '#monitoramento-sistemas'
         text: "{{ .CommonAnnotations.summary }}\n*Description:* {{ .CommonAnnotations.description }}\n*Severity:* {{ .CommonLabels.severity }}\n*Instance:* {{ .CommonLabels.instance }}\n[Ver AlertManager]({{ .ExternalURL }})"
+    
+    webhook_configs:
+      - url: 'http://calert:6000/dispatch'
