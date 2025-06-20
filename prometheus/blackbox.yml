@@ -1,0 +1,21 @@
+modules:
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      method: GET
+      valid_http_versions: ["HTTP/1.1", "HTTP/2"]
+      preferred_ip_protocol: "ip4"
+      valid_status_codes: [200]
+
+  http_any_status:
+    prober: http
+    timeout: 5s
+    http:
+      method: GET
+      preferred_ip_protocol: "ip4"
+      valid_status_codes: []
+
+  icmp:
+    prober: icmp
+    timeout: 5s
